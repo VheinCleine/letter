@@ -1,5 +1,5 @@
 // Initialize Three.js scene
-let scene, camera, renderer, letter, heart, particles;
+let scene, camera, renderer, letter, heart, particles, textGroup;
 
 function init() {
     // Create scene
@@ -17,7 +17,7 @@ function init() {
     
     // Add orbit controls
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableZoom = false;
+    controls.enableZoom = true;
     controls.enablePan = false;
     
     // Add lights
@@ -37,6 +37,9 @@ function init() {
     // Create floating particles
     createParticles();
     
+    // Load font and create text
+    loadFontAndCreateText();
+    
     // Handle window resize
     window.addEventListener('resize', onWindowResize);
     
@@ -51,12 +54,14 @@ function createLetter() {
         map: texture,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.7
+        opacity: 0.9
     });
     
     letter = new THREE.Mesh(geometry, material);
     letter.position.y = 0.5;
     scene.add(letter);
+    
+    return letter;
 }
 
 function createHeart() {
@@ -91,6 +96,74 @@ function createHeart() {
     heart.scale.set(0.8, 0.8, 0.8);
     heart.position.set(0, -1, 0);
     scene.add(heart);
+}
+
+function loadFontAndCreateText() {
+    const loader = new THREE.FontLoader();
+    loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function(font) {
+        textGroup = new THREE.Group();
+        
+        // First line of text
+        const textGeometry1 = new THREE.TextGeometry('My Dearest,', {
+            font: font,
+            size: 0.15,
+            height: 0.02,
+            curveSegments: 12,
+            bevelEnabled: false
+        });
+        const textMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+        const textMesh1 = new THREE.Mesh(textGeometry1, textMaterial);
+        textGeometry1.center();
+        textMesh1.position.set(0, 0.8, 0.1);
+        
+        // Second line of text
+        const textGeometry2 = new THREE.TextGeometry('You mean the world to me', {
+            font: font,
+            size: 0.12,
+            height: 0.02,
+            curveSegments: 12,
+            bevelEnabled: false
+        });
+        const textMesh2 = new THREE.Mesh(textGeometry2, textMaterial);
+        textGeometry2.center();
+        textMesh2.position.set(0, 0.5, 0.1);
+        
+        // Third line of text
+        const textGeometry3 = new THREE.TextGeometry('Forever yours,', {
+            font: font,
+            size: 0.12,
+            height: 0.02,
+            curveSegments: 12,
+            bevelEnabled: false
+        });
+        const textMesh3 = new THREE.Mesh(textGeometry3, textMaterial);
+        textGeometry3.center();
+        textMesh3.position.set(0, -0.2, 0.1);
+        
+        // Signature
+        const textGeometry4 = new THREE.TextGeometry('Your Love', {
+            font: font,
+            size: 0.15,
+            height: 0.02,
+            curveSegments: 12,
+            bevelEnabled: false
+        });
+        const signatureMaterial = new THREE.MeshPhongMaterial({ color: 0xe74c3c });
+        const textMesh4 = new THREE.Mesh(textGeometry4, signatureMaterial);
+        textGeometry4.center();
+        textMesh4.position.set(0.5, -0.5, 0.1);
+        
+        // Add all text to group
+        textGroup.add(textMesh1);
+        textGroup.add(textMesh2);
+        textGroup.add(textMesh3);
+        textGroup.add(textMesh4);
+        
+        // Position the group relative to the letter
+        textGroup.position.copy(letter.position);
+        textGroup.rotation.copy(letter.rotation);
+        scene.add(textGroup);
+    });
 }
 
 function createParticles() {
@@ -135,8 +208,14 @@ function onWindowResize() {
 function animate() {
     requestAnimationFrame(animate);
     
-    // Rotate letter and heart slightly
-    if (letter) letter.rotation.y += 0.002;
+    // Rotate letter and text together
+    if (letter) {
+        letter.rotation.y += 0.002;
+        if (textGroup) {
+            textGroup.rotation.copy(letter.rotation);
+        }
+    }
+    
     if (heart) {
         heart.rotation.z += 0.005;
         heart.position.y = -1 + Math.sin(Date.now() * 0.001) * 0.2;
